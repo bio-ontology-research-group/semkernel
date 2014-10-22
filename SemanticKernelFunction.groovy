@@ -101,6 +101,6 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
       }
     }
     def sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, s1, s2)
-    return 0
+    return sim
   }
 }
