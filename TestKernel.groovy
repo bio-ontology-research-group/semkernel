@@ -1,0 +1,1 @@
+SemanticKernelFunction kernel = new SemanticKernelFunction()
