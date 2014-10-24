@@ -65,6 +65,9 @@ public class SvmTrain
   //KernelFunction kernel;
   SVM svm;
 
+  private SemanticKernelFunction semKernel ;
+  private boolean useSemanticKernel = false ;
+
   ImmutableSvmParameter param;
 
   private MutableSvmProblem problem;		// set by read_problem
@@ -207,10 +210,10 @@ public class SvmTrain
       switch (argv[i - 1].charAt(1))
       {
       case 'f':
-	ontology_file_name = new String(args[i]);
+	ontology_file_name = new String(argv[i]);
 	break ;
       case 'z':
-	corpus_file_name = new String(args[i]);
+	corpus_file_name = new String(argv[i]);
 	break;
       case 's':
 	svm_type = Integer.parseInt(argv[i]);
@@ -388,7 +391,9 @@ public class SvmTrain
       builder.kernelSet.add(new PrecomputedKernel());
       break;
     case SvmTrain.SEMANTIC:
-      builder.kernelSet.add(new SemanticKernelFunction());
+      this.semKernel = new SemanticKernelFunction(ontology_file_name, corpus_file_name)
+      this.useSemanticKernel = true ;
+      builder.kernelSet.add(this.semKernel);
       break;
     default:
       throw new SvmException("Unknown kernel type: " + kernel_type);
@@ -432,6 +437,7 @@ public class SvmTrain
 		     + "	2 -- radial basis function: exp(-gamma*|u-v|^2)\n"
 		     + "	3 -- sigmoid: tanh(gamma*u'*v + coef0)\n"
 		     + "	4 -- precomputed kernel (kernel values in training_set_file)\n"
+		     + "	5 -- semantic kernel (must provide -f and -z)\n"
 		     + "-d degree : set degree in kernel function (default 3)\n"
 		     + "-g gamma : set gamma in kernel function (default 1/k)\n"
 		     + "-r coef0 : set coef0 in kernel function (default 0)\n"
@@ -463,6 +469,8 @@ public class SvmTrain
     Vector<Float> vy = new Vector<Float>();
     Vector<SparseVector> vx = new Vector<SparseVector>();
     int max_index = 0;
+    Map<Integer, String> index2class = [:]
+    Map<String, Integer> class2index = [:]
 
     while (true)
     {
@@ -472,24 +480,56 @@ public class SvmTrain
 	  break;
 	}
 
-      StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
+      if (!useSemanticKernel) {
 
-      vy.addElement(Float.parseFloat(st.nextToken()));
-      int m = st.countTokens() / 2;
-      SparseVector x = new SparseVector(m);
-      for (int j = 0; j < m; j++)
-      {
-	//x[j] = new svm_node();
-	x.indexes[j] = Integer.parseInt(st.nextToken());
-	x.values[j] = Float.parseFloat(st.nextToken());
-      }
-      if (m > 0)
+	StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
+	
+	vy.addElement(Float.parseFloat(st.nextToken()));
+	int m = st.countTokens() / 2;
+	SparseVector x = new SparseVector(m);
+	for (int j = 0; j < m; j++)
 	{
-	  max_index = Math.max(max_index, x.indexes[m - 1]);
+	  //x[j] = new svm_node();
+	  x.indexes[j] = Integer.parseInt(st.nextToken());
+	  x.values[j] = Float.parseFloat(st.nextToken());
 	}
-      vx.addElement(x);
+	if (m > 0)
+	  {
+	    max_index = Math.max(max_index, x.indexes[m - 1]);
+	  }
+	vx.addElement(x);
+      } else { // use different file format for semantic information; ID [tab] classURI
+	// first we read the indexMap; line starts with "map", then list of URI\t
+	if (line.startsWith("map")) {
+	  def toks = line.split("\t")
+	  def counter = 0
+	  toks[1..-1].each { tok ->
+	    index2class[counter] = tok
+	    class2index[tok] = counter
+	    counter += 1
+	  }
+	  semKernel.index2class = index2class
+	  semKernel.class2index = class2index
+	} else { // file format: class \t URI1 \t ... \t URIn \n
+	  def toks = line.split("\t")
+	  vy.addElement(Float.parseFloat(toks[0]))
+	  int m = toks.size()
+	  SparseVector x = new SparseVector(m)
+	  for (int j = 1 ; j < m ; j++) {
+	    //	    println class2index[toks[j]]
+	    //	    println toks[j]
+	    x.indexes[j-1] = class2index[toks[j]]
+	    x.values[j-1] = 1.0 // simply set the value to 1 in case class is used
+	    //	    println "X: $x"
+	  }
+	  if (m > 0)
+	    {
+	      max_index = Math.max(max_index, x.indexes[m - 1])
+	    }
+	  vx.addElement(x)
+	}
+      }
     }
-
 
     // build problem
     if (svm instanceof RegressionSVM)

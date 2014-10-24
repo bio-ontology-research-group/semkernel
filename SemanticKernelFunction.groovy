@@ -1,6 +1,8 @@
 
 import edu.berkeley.compbio.jlibsvm.kernel.KernelFunction
 import edu.berkeley.compbio.jlibsvm.util.*
+
+import org.openrdf.model.vocabulary.*
 import org.openrdf.model.URI
 import slib.sglib.model.impl.graph.elements.Edge
 import slib.sglib.io.conf.GDataConf
@@ -17,6 +19,7 @@ import slib.sglib.algo.graph.utils.*
 import slib.utils.impl.Timer
 import slib.sglib.algo.graph.extraction.rvf.instances.impl.InstanceAccessor_RDF_TYPE
 import slib.sglib.model.impl.graph.memory.GraphMemory
+import slib.sglib.algo.graph.utils.*
 
 
 public class SemanticKernelFunction implements KernelFunction<SparseVector> {
@@ -42,7 +45,7 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
     smConfGroupwise.setICconf(icConf)
 
 
-    g = new GraphMemory(graph_uri)
+    graph = new GraphMemory(graph_uri)
     this.graphconf = new GDataConf(GFormat.RDF_XML, ontologyFile)
     GraphLoaderGeneric.populate(graphconf, this.graph)
 
@@ -63,16 +66,30 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
     }               
     removeE.each { graph.removeE(it) }
     
+    def instanceCounter = 0
     new File(dataFile).splitEachLine("\t") { line ->
-      def id = line[0]
-      def ontId = line[1]
-      def iduri = factory.createURI(URI+id)
-      def onturi = factory.createURI(ontId)
-      try {
-	Edge e = new Edge(iduri, RDF.TYPE, onturi);
-	graph.addE(e)
-      } catch (Exception E) {
-	E.printStackTrace()
+      if (line[0].startsWith("map")) {
+	def toks = line
+	def counter = 0
+	toks[1..-1].each { tok ->
+	  index2class[counter] = tok
+	  class2index[tok] = counter
+	  counter += 1
+	}
+	this.index2class = index2class
+	this.class2index = class2index
+      } else {
+	def iduri = factory.createURI(URI+instanceCounter)
+	line[1..-1].each { oc ->
+	  def onturi = factory.createURI(oc)
+	  try {
+	    Edge e = new Edge(iduri, RDF.TYPE, onturi);
+	    graph.addE(e)
+	  } catch (Exception E) {
+	    E.printStackTrace()
+	  }
+	}
+	instanceCounter += 1
       }
     }
 
@@ -92,15 +109,17 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
     Set s2 = new LinkedHashSet()
     a.indexes.each { ia ->
       if (index2class[ia]) {
-	s1.add(index2class[ia])
+	s1.add(factory.createURI(index2class[ia]))
       }
     }
     b.indexes.each { ib ->
       if (index2class[ib]) {
-	s2.add(index2class[ib])
+	s2.add(factory.createURI(index2class[ib]))
       }
     }
-    def sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, s1, s2)
+    double sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, s1, s2)
+    //    println "s1: $s1\ts2: $s2\t$sim"
+
     return sim
   }
 }
