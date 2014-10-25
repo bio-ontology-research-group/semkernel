@@ -1,7 +1,6 @@
 
 import edu.berkeley.compbio.jlibsvm.kernel.KernelFunction
 import edu.berkeley.compbio.jlibsvm.util.*
-
 import org.openrdf.model.vocabulary.*
 import org.openrdf.model.URI
 import slib.sglib.model.impl.graph.elements.Edge

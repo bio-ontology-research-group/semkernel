@@ -124,11 +124,14 @@ public class SvmTrain
     model.save(model_file_name);
 
     // CV might have been done already for grid search or whatever
+    //    println "Performing Cross Validation..."
     CrossValidationResults cv = model.getCrossValidationResults();
+    //    println cv
     if (cv == null && crossValidation)
       {
 	// but if not, force it
 	cv = svm.performCrossValidation(problem, param); //, execService);
+	//	println cv
       }
     if (cv != null)
       {
@@ -623,62 +626,61 @@ public class SvmTrain
       }
   }
 
-  /*	private void do_cross_validation()
-	{
-	//int i;
-	int total_correct = 0;
-	int total_unknown = 0;
-	double total_error = 0;
-	double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
-	//double[] target = new double[problem.l];
+  private void do_cross_validation()
+  {
+    //int i;
+    int total_correct = 0;
+    int total_unknown = 0;
+    double total_error = 0;
+    double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
+    //double[] target = new double[problem.l];
+    
+    int numExamples = problem.getNumExamples();
 
-	int numExamples = problem.getNumExamples();
-
-	if (svm instanceof RegressionSVM) //param.svm_type == svm_parameter.EPSILON_SVR || param.svm_type == svm_parameter.NU_SVR)
-	{
+    if (svm instanceof RegressionSVM) //param.svm_type == svm_parameter.EPSILON_SVR || param.svm_type == svm_parameter.NU_SVR)
+      {
 	Map cvResult = svm.continuousCrossValidation(problem, param);
 	//for (i = 0; i < numExamples; i++)
 	for (Object p : problem.getExamples().keySet())
 	{
-	Float y = (Float) problem.getTargetValue(p);
-	Float v = (Float) cvResult.get(p);
-	total_error += (v - y) * (v - y);
-	sumv += v;
-	sumy += y;
-	sumvv += v * v;
-	sumyy += y * y;
-	sumvy += v * y;
+	  Float y = (Float) problem.getTargetValue(p);
+	  Float v = (Float) cvResult.get(p);
+	  total_error += (v - y) * (v - y);
+	  sumv += v;
+	  sumy += y;
+	  sumvv += v * v;
+	  sumyy += y * y;
+	  sumvy += v * y;
 	}
 	System.out.print("Cross Validation Mean squared error = " + total_error / numExamples + "\n");
 	System.out.print("Cross Validation Squared correlation coefficient = "
-	+ ((numExamples * sumvy - sumv * sumy) * (numExamples * sumvy - sumv * sumy)) / (
-	(numExamples * sumvv - sumv * sumv) * (numExamples * sumyy - sumy * sumy)) + "\n");
-	}
-	else
-	{
+			 + ((numExamples * sumvy - sumv * sumy) * (numExamples * sumvy - sumv * sumy)) / (
+			   (numExamples * sumvv - sumv * sumv) * (numExamples * sumyy - sumy * sumy)) + "\n");
+      }
+    else
+      {
 	Map cvResult = svm.discreteCrossValidation(problem, param);
 	for (Object p : problem.getExamples().keySet())
 	//	for (i = 0; i < numExamples; i++)
 	{
-	Object prediction = cvResult.get(p);
-	if (prediction == null)
-	{
-	++total_unknown;
+	  Object prediction = cvResult.get(p);
+	  if (prediction == null)
+	    {
+	      ++total_unknown;
+	    }
+	  else if (prediction.equals(problem.getTargetValue(p)))
+	  {
+	    ++total_correct;
+	  }
 	}
-	else if (prediction.equals(problem.getTargetValue(p)))
-	{
-	++total_correct;
-	}
-	}
-
+	
 	int classifiedExamples = numExamples - total_unknown;
 	System.out.print("Cross Validation Classified = " + 100.0 * classifiedExamples / numExamples + "%\n");
 	System.out.print("Cross Validation Accuracy (of those classified) = "
-	+ 100.0 * total_correct / classifiedExamples + "%\n");
+			 + 100.0 * total_correct / classifiedExamples + "%\n");
 	System.out.print("Cross Validation Accuracy (of total) = " + 100.0 * total_correct / numExamples + "%\n");
-	}
-	}*/
+      }
+  }
 }
-
 SvmTrain t = new SvmTrain();
 t.run(args);
