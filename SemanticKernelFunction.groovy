@@ -95,12 +95,13 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
     engine = new SM_Engine(graph)
 
     def counter = 0
+    /*
     graph.getV().each { v ->
       class2index[v.toString()] = counter
       index2class[counter] = v.toString()
       counter += 1
     }
-
+    */
   }
 
   double evaluate(SparseVector a, SparseVector b) {
