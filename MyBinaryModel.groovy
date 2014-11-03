@@ -44,6 +44,7 @@ public class MyBinaryModel<L extends Comparable, P> extends BinaryModel<L, P>
 
   //public SigmoidProbabilityModel sigmoid;
 
+  
 
   public ScalingModel<P> scalingModel = new NoopScalingModel<P>();
 
@@ -230,7 +231,7 @@ public class MyBinaryModel<L extends Comparable, P> extends BinaryModel<L, P>
     float sum = 0;
 
     P scaledX = scalingModel.scaledCopy(x);
-
+    //P scaledX = x
     for (int i = 0; i < numSVs; i++)
     {
       float kvalue = (float) param.kernel.evaluate(scaledX, SVs[i]);
@@ -331,4 +332,36 @@ public class MyBinaryModel<L extends Comparable, P> extends BinaryModel<L, P>
 
     fp.close();
   }
+
+  @Override
+  protected void readSupportVectors(BufferedReader reader) throws IOException
+  {
+    List<Double> alphaList = new ArrayList<Double>();
+    List<Set> svList = new ArrayList<Set>();
+
+    String line;
+    while ((line = reader.readLine()) != null)
+    {
+      def tok = line.split(" ")
+
+      alphaList.add(Double.parseDouble(tok[0])) ;
+
+      Set<String> s = new LinkedHashSet<String>()
+      def ss = line.substring(line.indexOf("[")+1, line.indexOf("]"))
+      ss.split("\\,").each { 
+	s.add(it.trim())
+      }
+      svList.add(s)
+    }
+
+    alphas = alphaList.toArray(new Double[alphaList.size()]) 
+    SVs = (P[]) svList.toArray(new LinkedHashSet[svList.size()])
+
+
+    numSVs = SVs.length;
+
+    supportVectors = null; // we read it directly to the compact representation
+  }
+
+
 }

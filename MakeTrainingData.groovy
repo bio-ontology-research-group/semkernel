@@ -56,7 +56,7 @@ reasoner.getSubClasses(cl, false).getFlattened().each { sc ->
 
 def map = [:].withDefault { new TreeSet() }
 
-def classes = new TreeSet()
+//def classes = ont.getClassesInSignature(true)
 
 new File("gene_association.mgi").splitEachLine("\t") { line ->
   if (! line[0].startsWith("!")) {
@@ -66,7 +66,7 @@ new File("gene_association.mgi").splitEachLine("\t") { line ->
     if (evidence != "ND") {
       got = "http://purl.obolibrary.org/obo/"+got
       map[gid].add(got)
-      classes.add(got)
+      //      classes.add(got)
     }
   }
 }
@@ -84,10 +84,12 @@ new File("mousephenotypes.txt").splitEachLine("\t") { line ->
   }
 }
 
-// header
+// header; OBSOLETE
+/*
 fout.print("map")
 classes.each { fout.print("\t$it") }
 fout.println ("")
+*/
 
 List negatives = []
 List positives = []

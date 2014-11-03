@@ -469,9 +469,10 @@ public class SvmTrain
   private void read_problem() throws IOException
   {
     BufferedReader fp = new BufferedReader(new FileReader(input_file_name));
-    Vector<Float> vy = new Vector<Float>();
-    Vector<SparseVector> vx = new Vector<SparseVector>();
+    Vector<Float> vy = new Vector<Float>(); // target
+    Vector<SparseVector> vx = new Vector<SparseVector>(); // features
     int max_index = 0;
+    Vector<Set> semvx = new Vector<Set>(); // semantic features
     Map<Integer, String> index2class = [:]
     Map<String, Integer> class2index = [:]
 
@@ -501,36 +502,27 @@ public class SvmTrain
 	    max_index = Math.max(max_index, x.indexes[m - 1]);
 	  }
 	vx.addElement(x);
-      } else { // use different file format for semantic information; ID [tab] classURI
-	// first we read the indexMap; line starts with "map", then list of URI\t
-	if (line.startsWith("map")) {
-	  def toks = line.split("\t")
-	  def counter = 0
-	  toks[1..-1].each { tok ->
-	    index2class[counter] = tok
-	    class2index[tok] = counter
-	    counter += 1
-	  }
-	  semKernel.index2class = index2class
-	  semKernel.class2index = class2index
-	} else { // file format: class \t URI1 \t ... \t URIn \n
-	  def toks = line.split("\t")
-	  vy.addElement(Float.parseFloat(toks[0]))
+      } else {
+	def toks = line.split("\t")
+	vy.addElement(Float.parseFloat(toks[0]))
+	Set<String> ts = new LinkedHashSet<String>()
+	toks[1..-1].each { ts.add(it) }
+	/*
 	  int m = toks.size()
 	  SparseVector x = new SparseVector(m)
 	  for (int j = 1 ; j < m ; j++) {
-	    //	    println class2index[toks[j]]
-	    //	    println toks[j]
-	    x.indexes[j-1] = class2index[toks[j]]
-	    x.values[j-1] = 1.0 // simply set the value to 1 in case class is used
-	    //	    println "X: $x"
+	  //	    println class2index[toks[j]]
+	  //	    println toks[j]
+	  x.indexes[j-1] = class2index[toks[j]]
+	  x.values[j-1] = 1.0 // simply set the value to 1 in case class is used
+	  //	    println "X: $x"
 	  }
 	  if (m > 0)
-	    {
-	      max_index = Math.max(max_index, x.indexes[m - 1])
-	    }
-	  vx.addElement(x)
-	}
+	  {
+	  max_index = Math.max(max_index, x.indexes[m - 1])
+	  }
+	*/
+	semvx.addElement(ts)
       }
     }
 
@@ -539,7 +531,7 @@ public class SvmTrain
       {
 	problem = new MutableRegressionProblemImpl(vy.size());
       }
-    else
+    else // classification svm
       {
 	Set<Float> uniqueClasses = new HashSet<Float>(vy);
 	int numClasses = uniqueClasses.size();
@@ -558,19 +550,13 @@ public class SvmTrain
 								     vy.size(),
 								     new NoopScalingModel<SparseVector>());
 	  }
-
-	/*for (int i = 0; i < vy.size(); i++)
-	  {
-	  problem.addExample(vx.elementAt(i))
-	  problem.examples[i] = vx.elementAt(i);
-	  }*/
       }
 
 
     //boolean isClassification = svm instanceof BinaryClassificationSVM;
     for (int i = 0; i < vy.size(); i++)
     {
-      problem.addExampleFloat(vx.elementAt(i), vy.elementAt(i));
+      problem.addExampleFloat(semvx.elementAt(i), vy.elementAt(i));
       /*		if (isClassification)
 			{
 			problem.uniqueValues.add(new Float(vy.elementAt(i)));

@@ -21,7 +21,7 @@ import slib.sglib.model.impl.graph.memory.GraphMemory
 import slib.sglib.algo.graph.utils.*
 
 
-public class SemanticKernelFunction implements KernelFunction<SparseVector> {
+public class SemanticKernelFunction implements KernelFunction<Set<String>> {
   def URI = "http://phenomebrowser.net/smltest/"
   URIFactory factory = URIFactoryMemory.getSingleton()
   URI graph_uri = factory.createURI(URI)
@@ -94,17 +94,11 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
 
     engine = new SM_Engine(graph)
 
-    def counter = 0
-    /*
-    graph.getV().each { v ->
-      class2index[v.toString()] = counter
-      index2class[counter] = v.toString()
-      counter += 1
-    }
-    */
   }
 
-  double evaluate(SparseVector a, SparseVector b) {
+  // s1 and s2 are sets of URI-Strings
+  double evaluate(Set<String> s1, Set<String> s2) {
+    /*
     Set s1 = new LinkedHashSet()
     Set s2 = new LinkedHashSet()
     a.indexes.each { ia ->
@@ -117,9 +111,22 @@ public class SemanticKernelFunction implements KernelFunction<SparseVector> {
 	s2.add(factory.createURI(index2class[ib]))
       }
     }
-    double sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, s1, s2)
+    */
+    Set<URI> a = new LinkedHashSet()
+    Set<URI> b = new LinkedHashSet()
+    s1.each { a.add(factory.createURI(it)) }
+    s2.each { b.add(factory.createURI(it)) }
+
+    double sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, a, b)
     //    println "s1: $s1\ts2: $s2\t$sim"
 
     return sim
   }
+
+  String toString() {
+    def s = ""
+    s += "kernel_type SemanticKernelFunction\n"
+    return s
+  }
+
 }

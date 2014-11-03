@@ -155,7 +155,7 @@ public class SVMPredict
 
       Float target = null
       int m = 0
-      SparseVector x = null
+      def x = null
       if (!semanticKernel) {
 	StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
 	
@@ -169,30 +169,10 @@ public class SVMPredict
 	  x.values[j] = Float.parseFloat(st.nextToken());
 	}
       } else {	
-	if (line.startsWith("map")) {
-          def toks = line.split("\t")
-          def counter = 0
-          toks[1..-1].each { tok ->
-            index2class[counter] = tok
-            class2index[tok] = counter
-            counter += 1
-          }
-	  continue
-	  //          semKernel.index2class = index2class
-	  //          semKernel.class2index = class2index
-        } else { // file format: class \t URI1 \t ... \t URIn \n                                                                                               
-          def toks = line.split("\t")
-	  target = Integer.parseInt(toks[0])
-          m = toks.size()
-          x = new SparseVector(m)
-          for (int j = 1 ; j < m ; j++) {
-            //      println class2index[toks[j]]                                                                                     
-            //      println toks[j]                                                                                                 
-            x.indexes[j-1] = class2index[toks[j]]
-            x.values[j-1] = 1.0 // simply set the value to 1 in case class is used
-            //      println "X: $x"                                           
-          }
-	}
+	def toks = line.split("\t")
+	target = Integer.parseInt(toks[0])
+	x = new LinkedHashSet<String>()
+	toks[1..-1].each { x.add(it) }
       }
 
       Object prediction;
