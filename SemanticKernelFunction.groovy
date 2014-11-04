@@ -1,30 +1,29 @@
-
 import edu.berkeley.compbio.jlibsvm.kernel.KernelFunction
 import edu.berkeley.compbio.jlibsvm.util.*
 import org.openrdf.model.vocabulary.*
 import org.openrdf.model.URI
-import slib.sglib.model.impl.graph.elements.Edge
-import slib.sglib.io.conf.GDataConf
-import slib.sglib.io.loader.*
-import slib.sglib.io.util.GFormat
-import slib.sglib.model.graph.G
-import slib.sglib.model.impl.repo.URIFactoryMemory
-import slib.sglib.model.repo.URIFactory
+import slib.graph.model.impl.graph.elements.Edge
+import slib.graph.io.conf.GDataConf
+import slib.graph.io.loader.*
+import slib.graph.io.util.GFormat
+import slib.graph.model.graph.G
+import slib.graph.model.impl.repo.URIFactoryMemory
+import slib.graph.model.repo.URIFactory
 import slib.sml.sm.core.engine.SM_Engine
 import slib.sml.sm.core.metrics.ic.utils.*
 import slib.sml.sm.core.utils.*
-import slib.sglib.algo.graph.extraction.rvf.instances.InstancesAccessor
-import slib.sglib.algo.graph.utils.*
+import slib.graph.algo.extraction.rvf.instances.InstancesAccessor
+import slib.graph.algo.graph.utils.*
+import slib.graph.algo.extraction.utils.*
 import slib.utils.impl.Timer
-import slib.sglib.algo.graph.extraction.rvf.instances.impl.InstanceAccessor_RDF_TYPE
-import slib.sglib.model.impl.graph.memory.GraphMemory
-import slib.sglib.algo.graph.utils.*
+import slib.graph.algo.extraction.rvf.instances.impl.InstanceAccessor_RDF_TYPE
+import slib.graph.model.impl.graph.memory.GraphMemory
 
 
 public class SemanticKernelFunction implements KernelFunction<Set<String>> {
   def URI = "http://phenomebrowser.net/smltest/"
   URIFactory factory = URIFactoryMemory.getSingleton()
-  URI graph_uri = factory.createURI(URI)
+  URI graph_uri = factory.getURI(URI)
   G graph = null
   GDataConf graphconf = null 
   SM_Engine engine = null
@@ -32,8 +31,12 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
   Map<Integer, String> index2class = [:]
 
   // hard-coded configuration; add to constructor at some point; simGIC (weighted Jaccard) should define a kernel function
+
   ICconf icConf = new IC_Conf_Corpus("Resnik", SMConstants.FLAG_IC_ANNOT_RESNIK_1995)
-  SMconf smConfGroupwise = new SMconf("SimGIC", SMConstants.FLAG_SIM_GROUPWISE_DAG_GIC)
+  SMconf smConfPairwise = new SMconf("JiangConrath", SMConstants.FLAG_DIST_PAIRWISE_DAG_NODE_JIANG_CONRATH_1997)
+  SMconf smConfGroupwise = new SMconf("BMA", SMConstants.FLAG_SIM_GROUPWISE_AVERAGE)
+
+  //  SMconf smConfGroupwise = new SMconf("SimGIC", SMConstants.FLAG_SIM_GROUPWISE_DAG_GIC)
 
 
 
@@ -42,13 +45,14 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
   public SemanticKernelFunction(String ontologyFile, String dataFile) {
 
     smConfGroupwise.setICconf(icConf)
+    smConfPairwise.setICconf(icConf)
 
 
     graph = new GraphMemory(graph_uri)
     this.graphconf = new GDataConf(GFormat.RDF_XML, ontologyFile)
     GraphLoaderGeneric.populate(graphconf, this.graph)
 
-    URI virtualRoot = factory.createURI("http://phenomebrowser.net/smltest/virtualRoot");
+    URI virtualRoot = factory.getURI("http://phenomebrowser.net/smltest/virtualRoot");
     graph.addV(virtualRoot);
     // We root the graphs using the virtual root as root
     GAction rooting = new GAction(GActionType.REROOTING)
@@ -78,9 +82,9 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
 	this.index2class = index2class
 	this.class2index = class2index
       } else {
-	def iduri = factory.createURI(URI+instanceCounter)
+	def iduri = factory.getURI(URI+instanceCounter)
 	line[1..-1].each { oc ->
-	  def onturi = factory.createURI(oc)
+	  def onturi = factory.getURI(oc)
 	  try {
 	    Edge e = new Edge(iduri, RDF.TYPE, onturi);
 	    graph.addE(e)
@@ -103,21 +107,22 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
     Set s2 = new LinkedHashSet()
     a.indexes.each { ia ->
       if (index2class[ia]) {
-	s1.add(factory.createURI(index2class[ia]))
+	s1.add(factory.getURI(index2class[ia]))
       }
     }
     b.indexes.each { ib ->
       if (index2class[ib]) {
-	s2.add(factory.createURI(index2class[ib]))
+	s2.add(factory.getURI(index2class[ib]))
       }
     }
     */
     Set<URI> a = new LinkedHashSet()
     Set<URI> b = new LinkedHashSet()
-    s1.each { a.add(factory.createURI(it)) }
-    s2.each { b.add(factory.createURI(it)) }
+    s1.each { a.add(factory.getURI(it)) }
+    s2.each { b.add(factory.getURI(it)) }
 
-    double sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, a, b)
+    //    double sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, a, b)
+    double sim = engine.compare(smConfGroupwise, smConfPairwise, a, b)
     //    println "s1: $s1\ts2: $s2\t$sim"
 
     return sim
