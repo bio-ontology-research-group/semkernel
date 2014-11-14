@@ -212,12 +212,13 @@ public class SvmTrain
 	}
       switch (argv[i - 1].charAt(1))
       {
-      case 'f':
-	ontology_file_name = new String(argv[i]);
-	break ;
       case 'z':
+	ontology_file_name = new String(argv[i]);
+	corpus_file_name = "";
+	break ;
+	/*      case 'z':
 	corpus_file_name = new String(argv[i]);
-	break;
+	break;*/
       case 's':
 	svm_type = Integer.parseInt(argv[i]);
 	break;
@@ -459,8 +460,8 @@ public class SvmTrain
 		     + "-v n: n-fold cross validation mode\n" + "-f scalingmode : none (default), linear, zscore\n"
 		     + "-x scalinglimit : maximum examples to use for scaling (default 1000)\n"
 		     + "-l 2: project to unit sphere (normalize L2 distance)\n"
-		     + "-f ontology_file: name of the ontology file (for use with SemanticKernel)\n"
-		     + "-z corpus_file: name of the corpus file (for use with SemanticKernel)\n");
+		     + "-z ontology_file: name of the ontology file (for use with SemanticKernel)\n");
+    //		     + "-z corpus_file: name of the corpus file (for use with SemanticKernel)\n");
     System.exit(1);
   }
 

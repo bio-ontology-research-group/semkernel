@@ -32,11 +32,12 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
 
   // hard-coded configuration; add to constructor at some point; simGIC (weighted Jaccard) should define a kernel function
 
-  ICconf icConf = new IC_Conf_Corpus("Resnik", SMConstants.FLAG_IC_ANNOT_RESNIK_1995)
+  //  ICconf icConf = new IC_Conf_Corpus("Resnik", SMConstants.FLAG_IC_ANNOT_RESNIK_1995)
+  ICconf icConf = new IC_Conf_Topo("Resnik", SMConstants.FLAG_ICI_HARISPE_2012)
   SMconf smConfPairwise = new SMconf("JiangConrath", SMConstants.FLAG_DIST_PAIRWISE_DAG_NODE_JIANG_CONRATH_1997)
-  SMconf smConfGroupwise = new SMconf("BMA", SMConstants.FLAG_SIM_GROUPWISE_AVERAGE)
+  //  SMconf smConfGroupwise = new SMconf("BMA", SMConstants.FLAG_SIM_GROUPWISE_AVERAGE)
 
-  //  SMconf smConfGroupwise = new SMconf("SimGIC", SMConstants.FLAG_SIM_GROUPWISE_DAG_GIC)
+  SMconf smConfGroupwise = new SMconf("SimGIC", SMConstants.FLAG_SIM_GROUPWISE_DAG_GIC)
 
 
 
@@ -70,6 +71,8 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
     removeE.each { graph.removeE(it) }
     
     def instanceCounter = 0
+	    // FIXME: Add this again when using corpus-based IC computation
+    /*
     new File(dataFile).splitEachLine("\t") { line ->
       if (line[0].startsWith("map")) {
 	def toks = line
@@ -86,8 +89,8 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
 	line[1..-1].each { oc ->
 	  def onturi = factory.getURI(oc)
 	  try {
-	    Edge e = new Edge(iduri, RDF.TYPE, onturi);
-	    graph.addE(e)
+	  	    Edge e = new Edge(iduri, RDF.TYPE, onturi);
+		    graph.addE(e)
 	  } catch (Exception E) {
 	    E.printStackTrace()
 	  }
@@ -95,7 +98,7 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
 	instanceCounter += 1
       }
     }
-
+    */
     engine = new SM_Engine(graph)
 
   }
@@ -122,7 +125,8 @@ public class SemanticKernelFunction implements KernelFunction<Set<String>> {
     s2.each { b.add(factory.getURI(it)) }
 
     //    double sim = engine.computeGroupwiseStandaloneSim(smConfGroupwise, a, b)
-    double sim = engine.compare(smConfGroupwise, smConfPairwise, a, b)
+    //    double sim = engine.compare(smConfGroupwise, smConfPairwise, a, b)
+    double sim = engine.compare(smConfGroupwise, a, b)
     //    println "s1: $s1\ts2: $s2\t$sim"
 
     return sim

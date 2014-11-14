@@ -12,6 +12,7 @@ usage: 'Self'
   s longOpt:'search-class', 'URI of phenotype class to build a classifier for', args:1, required:true
   o longOpt:'output', 'output file', args:1, required:true
   r longOpt:'ratio', 'ratio of negative to positive (default: use all)', args:1, required:false
+  f longOpt:'flat', 'use flat feature vector (libSVM style)', args:0, required:false
   //  "1" longOpt:'pmi', 'min PMI', args:1, required:true
   //  "2" longOpt:'lmi', 'min LMI', args:1, required:true
 }
@@ -28,8 +29,14 @@ if( opt.h ) {
 
 def searchClass = opt.s
 def fout = new PrintWriter(new BufferedWriter(new FileWriter(opt.o)))
+Boolean flat = false
+if (opt.f) {
+  flat=true
+}
 Double ratio = -1
-if (opt.r) { ratio = new Double(opt.r) }
+if (opt.r) { 
+  ratio = new Double(opt.r) 
+}
 
 def classifierFor = new TreeSet()
 classifierFor.add(searchClass)

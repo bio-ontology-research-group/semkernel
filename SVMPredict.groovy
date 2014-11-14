@@ -205,6 +205,7 @@ public class SVMPredict
       }
       else if (model instanceof ContinuousModel)
       {
+	println "Continuous model..."
 	prediction = ((ContinuousModel) model).predictValue(x); //svm.svm_predict(model, x);
 	output.writeBytes(prediction + "\n");
       }
