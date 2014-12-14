@@ -91,10 +91,38 @@ class svm_train {
 		}
 		else
 		{
-			for(i=0;i<prob.l;i++)
-				if(target[i] == prob.y[i])
-					++total_correct;
-			System.out.print("Cross Validation Accuracy = "+100.0*total_correct/prob.l+"%\n");
+		    int true_positive = 0 ;
+		    int true_negative = 0 ;
+		    int false_positive = 0 ;
+		    int false_negative = 0 ;
+		    for(i=0;i<prob.l;i++) {
+			System.out.println("Target: "+target[i]);
+			System.out.println("Prob: "+prob.y[i]);
+			if ((target[i] == prob.y[i]) && (prob.y[i] == 0.0)) {
+			    ++true_negative ;
+			} else if ((target[i] == prob.y[i]) && (prob.y[i] == 1.0)) {
+			    ++true_positive ;
+			} else if ((target[i] != prob.y[i]) && (prob.y[i] == 0.0)) {
+			    ++false_positive ;
+			} else if ((target[i] != prob.y[i]) && (prob.y[i] == 1.0)) {
+			    ++false_negative ;
+			} 
+			if(target[i] == prob.y[i]) {
+			    ++total_correct;
+			}
+		    }
+		    System.out.println("True positives: "+true_positive) ;
+		    System.out.println("True negative: "+true_negative) ;
+		    System.out.println("False positives: "+false_positive) ;
+		    System.out.println("False negatives: "+false_negative) ;
+		    double precision = 1.0 * true_positive / (true_positive + false_positive) ;
+		    double recall = 1.0 * true_positive / (true_positive + false_negative) ;
+		    double fscore =  2.0 * precision * recall / (precision + recall) ;
+		    double sensitivity = 1.0 * true_positive / (true_positive + false_negative) ;
+		    double specificity = 1.0 * true_negative / (true_negative + false_positive) ;
+		    double bac = (sensitivity + specificity) / 2 ;
+		    System.out.println("BAC: "+bac+"; Precision: "+precision+"; Recall: "+recall+"; F-Score: "+fscore+"; Sensitivity: "+sensitivity+"; Specificity: "+specificity) ;
+		    System.out.print("Cross Validation Accuracy = "+100.0*total_correct/prob.l+"%\n");
 		}
 	}
 	
