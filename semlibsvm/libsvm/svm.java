@@ -244,11 +244,13 @@ abstract class Kernel extends QMatrix {
 	smConfGroupwise = new SMconf("SimGIC", SMConstants.FLAG_SIM_GROUPWISE_DAG_GIC);                                                                           
 	smConfGroupwise.setICconf(icConf) ;                                                                                                                       
 	//          smConfPairwise.setICconf(icConf) ;                                                                                                            
-                                                                                                                                                                          
+
+	URIFactoryMemory.getSingleton().loadNamespacePrefix("GO", "http://purl.obolibrary.org/obo/GO_");
 	graph = new GraphMemory(graph_uri);                                                                                                                       
-	graphconf = new GDataConf(GFormat.RDF_XML, ontfile);                                                                                     
+	//	graphconf = new GDataConf(GFormat.RDF_XML, ontfile);                                                                                     
+	graphconf = new GDataConf(GFormat.OBO, ontfile);                                                                                     
 	GraphLoaderGeneric.populate(graphconf, graph);                                                                         
-                                                                                                                                                                          
+	//	System.out.println(graph.getV()) ;
 	URI virtualRoot = factory.getURI("http://phenomebrowser.net/smltest/virtualRoot");                                                                        
 	graph.addV(virtualRoot);                                                                                                                                  
 	// We root the graphs using the virtual root as root                                                                                                      
@@ -256,7 +258,12 @@ abstract class Kernel extends QMatrix {
 	rooting.addParameter("root_uri", virtualRoot.stringValue());                                                                                              
 	GraphActionExecutor.applyAction(factory, rooting, graph);                                                                                                 
 	engine = new SM_Engine(graph);                                                                                                                            
-	} catch (Exception E) {}
+	} catch (Exception E) {
+	    System.err.println(E.getMessage()) ;
+	    E.printStackTrace() ;
+	    System.err.println("Error loading ontology file.");
+	    System.exit(-1) ;
+	}
     }
 
     Kernel(int l, svm_node[][] x_, svm_parameter param)
@@ -2362,8 +2369,13 @@ public class svm {
 		    param.svm_type == svm_parameter.NU_SVC))
 		    {
 			double[] prob_estimates= new double[svm_get_nr_class(submodel)];
-			for(j=begin;j<end;j++)
+			for(j=begin;j<end;j++) {
 			    target[perm[j]] = svm_predict_probability(submodel,prob.x[perm[j]],prob_estimates);
+			    System.out.println("Target: "+target[perm[j]]);
+			    System.out.println("ProbEstim(0): "+prob_estimates[0]);
+			    System.out.println("ProbEstim(1): "+prob_estimates[1]);
+			    target[perm[j]] = prob_estimates[0] ;
+			}
 		    }
 		else
 		    for(j=begin;j<end;j++)
@@ -2524,8 +2536,9 @@ public class svm {
 
 		int prob_max_idx = 0;
 		for(i=1;i<nr_class;i++)
-		    if(prob_estimates[i] > prob_estimates[prob_max_idx])
+		    if(prob_estimates[i] > prob_estimates[prob_max_idx]) {
 			prob_max_idx = i;
+		    }
 		return model.label[prob_max_idx];
 	    }
 	else 
